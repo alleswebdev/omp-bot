@@ -10,7 +10,10 @@ import (
 )
 
 func main() {
-	_ = godotenv.Load()
+	err := godotenv.Load()
+	if err != nil {
+		log.Panic(".env file not found")
+	}
 
 	token, found := os.LookupEnv("TOKEN")
 	if !found {
