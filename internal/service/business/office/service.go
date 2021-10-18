@@ -115,7 +115,6 @@ func (s *DummyOfficeService) Update(officeId uint64, office business.Office) err
 
 	if len(office.Name) > 0 {
 		s.allEntities[officeId].Name = office.Name
-		errors.New("field 'Name' is required")
 	}
 
 	if len(office.Description) > 0 {
