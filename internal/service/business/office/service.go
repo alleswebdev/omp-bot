@@ -65,6 +65,10 @@ func (s *DummyOfficeService) List(cursor uint64, limit uint64) ([]business.Offic
 }
 
 func (s *DummyOfficeService) Describe(officeId uint64) (*business.Office, error) {
+	if len(s.allEntities) == 0 {
+		return nil, errors.New("entity list is empty")
+	}
+
 	if uint64(len(s.allEntities)-1) < officeId {
 		return nil, fmt.Errorf("entity with id %d not found", officeId)
 	}
@@ -74,6 +78,10 @@ func (s *DummyOfficeService) Describe(officeId uint64) (*business.Office, error)
 }
 
 func (s *DummyOfficeService) Remove(officeId uint64) (bool, error) {
+	if len(s.allEntities) == 0 {
+		return false, errors.New("entity list is empty")
+	}
+
 	if uint64(len(s.allEntities)-1) < officeId {
 		return false, fmt.Errorf("entity with id %d not found", officeId)
 	}
@@ -97,6 +105,10 @@ func (s *DummyOfficeService) Create(o business.Office) (uint64, error) {
 }
 
 func (s *DummyOfficeService) Update(officeId uint64, office business.Office) error {
+	if len(s.allEntities) == 0 {
+		return errors.New("entity list is empty")
+	}
+
 	if uint64(len(s.allEntities)-1) < officeId {
 		return fmt.Errorf("entity with id %d not found", officeId)
 	}
