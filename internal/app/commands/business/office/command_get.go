@@ -1,6 +1,7 @@
 package office
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	"strconv"
@@ -12,36 +13,26 @@ func (c *OfficeCommander) Get(inputMessage *tgbotapi.Message) {
 	idx, err := strconv.ParseUint(args, 10, 64)
 
 	if err != nil {
-		log.Printf("wrong args %#v, err: %s", args, err)
-
-		msg := tgbotapi.NewMessage(
+		c.SendMsg(tgbotapi.NewMessage(
 			inputMessage.Chat.ID,
 			"Wrong args. Id must be a non-zero integer",
-		)
-		_, err = c.bot.Send(msg)
-
-		if err != nil {
-			log.Printf("OfficeCommander.Delete: error sending reply message to chat - %v", err)
-		}
+		))
 
 		return
 	}
 
-	msg := tgbotapi.NewMessage(
-		inputMessage.Chat.ID,
-		"",
-	)
 	entity, err := c.officeService.Describe(idx)
 
 	if err != nil {
 		log.Printf("fail to get entity with id %d: %v", idx, err)
-		msg.Text = err.Error()
-	} else {
-		msg.Text = entity.String()
+
+		c.SendMsg(tgbotapi.NewMessage(
+			inputMessage.Chat.ID,
+			fmt.Sprintf("fail to get entity with id %d", idx),
+		))
 	}
 
-	_, err = c.bot.Send(msg)
-	if err != nil {
-		log.Printf("OfficeCommander.Get: error sending reply message to chat - %v", err)
-	}
+	c.SendMsg(tgbotapi.NewMessage(
+		inputMessage.Chat.ID,
+		entity.String()))
 }

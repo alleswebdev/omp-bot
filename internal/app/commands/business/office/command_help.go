@@ -2,7 +2,6 @@ package office
 
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"log"
 )
 
 func (c *OfficeCommander) Help(inputMessage *tgbotapi.Message) {
@@ -16,8 +15,5 @@ func (c *OfficeCommander) Help(inputMessage *tgbotapi.Message) {
 	`,
 	)
 
-	_, err := c.bot.Send(msg)
-	if err != nil {
-		log.Printf("OfficeCommander.Help: error sending reply message to chat - %v", err)
-	}
+	c.SendMsg(msg)
 }

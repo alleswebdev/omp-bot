@@ -17,7 +17,7 @@ type EditRequest struct {
 func (c *OfficeCommander) Edit(inputMessage *tgbotapi.Message) {
 	args := inputMessage.CommandArguments()
 
-	parsedData := EditRequest{}
+	var parsedData EditRequest
 
 	err := json.Unmarshal([]byte(args), &parsedData)
 
@@ -26,22 +26,13 @@ func (c *OfficeCommander) Edit(inputMessage *tgbotapi.Message) {
 			"error reading json data for type Office from "+
 			"input string %v - %v", args, err)
 
-		msg := tgbotapi.NewMessage(
+		c.SendMsg(tgbotapi.NewMessage(
 			inputMessage.Chat.ID,
-			`Wrong json struct. Please send like this: {"id": 1, name":"name", "description":"description"}`,
-		)
+			`Wrong json struct. Please send like this: {"id": 1, "name":"name", "description":"description"}`,
+		))
 
-		_, err = c.bot.Send(msg)
-		if err != nil {
-			log.Printf("OfficeCommander.Edit: error sending reply message to chat - %v", err)
-		}
 		return
 	}
-
-	msg := tgbotapi.NewMessage(
-		inputMessage.Chat.ID,
-		"",
-	)
 
 	err = c.officeService.Update(parsedData.Id, business.Office{
 		Name:        parsedData.Name,
@@ -49,14 +40,16 @@ func (c *OfficeCommander) Edit(inputMessage *tgbotapi.Message) {
 	})
 
 	if err != nil {
-		log.Printf("fail to edit entity %v", err)
-		msg.Text = err.Error()
-	} else {
-		msg.Text = fmt.Sprintf("Entity was updated, id:%d", parsedData.Id)
+		log.Printf("fail to update entity %s", err)
+		c.SendMsg(tgbotapi.NewMessage(
+			inputMessage.Chat.ID,
+			fmt.Sprintf("Error while edited an entity:%s", err),
+		))
+		return
 	}
 
-	_, err = c.bot.Send(msg)
-	if err != nil {
-		log.Printf("OfficeCommander.Edit: error sending reply message to chat - %v", err)
-	}
+	c.SendMsg(tgbotapi.NewMessage(
+		inputMessage.Chat.ID,
+		fmt.Sprintf("Entity was updated, id:%d", parsedData.Id)))
+
 }

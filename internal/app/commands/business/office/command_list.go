@@ -8,12 +8,13 @@ import (
 	"github.com/ozonmp/omp-bot/internal/app/path"
 )
 
-const ListLimit = 2
+const BaseLimit = 2
+const BaseOffset = 0
 
 func (c *OfficeCommander) List(inputMessage *tgbotapi.Message) {
 	outputMsgText := "Entity list page 1: \n\n"
 
-	entities, err := c.officeService.List(0, ListLimit)
+	entities, err := c.officeService.List(BaseOffset, BaseLimit)
 
 	for _, e := range entities {
 		outputMsgText += e.String()
@@ -22,10 +23,16 @@ func (c *OfficeCommander) List(inputMessage *tgbotapi.Message) {
 
 	msg := tgbotapi.NewMessage(inputMessage.Chat.ID, outputMsgText)
 
-	serializedData, _ := json.Marshal(CallbackListData{
-		Cursor: ListLimit,
-		Limit:  ListLimit,
+	serializedData, err := json.Marshal(CallbackListData{
+		Cursor: BaseOffset + BaseLimit,
+		Limit:  BaseLimit,
 	})
+
+	if err != nil {
+		log.Printf("OfficeCommander.List: "+
+			"error marshal json data for type CallbackListData %v", err)
+		return
+	}
 
 	callbackPath := path.CallbackPath{
 		Domain:       "business",
@@ -40,9 +47,5 @@ func (c *OfficeCommander) List(inputMessage *tgbotapi.Message) {
 		),
 	)
 
-	_, err = c.bot.Send(msg)
-
-	if err != nil {
-		log.Printf("OfficeCommander.List: error sending reply message to chat - %v", err)
-	}
+	c.SendMsg(msg)
 }

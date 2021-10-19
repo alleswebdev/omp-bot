@@ -60,3 +60,11 @@ func (c *OfficeCommander) HandleCommand(msg *tgbotapi.Message, commandPath path.
 		c.Help(msg)
 	}
 }
+
+func (c *OfficeCommander) SendMsg(msg tgbotapi.Chattable) {
+	_, err := c.bot.Send(msg)
+
+	if err != nil {
+		log.Printf("OfficeCommander: error sending reply message to chat - %v", err)
+	}
+}

@@ -16,7 +16,7 @@ type CreateRequest struct {
 func (c *OfficeCommander) Create(inputMessage *tgbotapi.Message) {
 	args := inputMessage.CommandArguments()
 
-	parsedData := business.Office{}
+	var parsedData CreateRequest
 
 	err := json.Unmarshal([]byte(args), &parsedData)
 
@@ -25,34 +25,27 @@ func (c *OfficeCommander) Create(inputMessage *tgbotapi.Message) {
 			"error reading json data for type Office from "+
 			"input string %v - %v", args, err)
 
-		msg := tgbotapi.NewMessage(
+		c.SendMsg(tgbotapi.NewMessage(
 			inputMessage.Chat.ID,
-			"Wrong json struct. Please send like this: {\"name\":\"name\", \"description\":\"description\"}",
-		)
-
-		_, err = c.bot.Send(msg)
-		if err != nil {
-			log.Printf("OfficeCommander.Create: error sending reply message to chat - %v", err)
-		}
+			`Wrong json struct. Please send like this: {"name":"name", "description":"description"}`,
+		))
 		return
 	}
 
-	msg := tgbotapi.NewMessage(
+	id, err := c.officeService.Create(business.Office{
+		Name:        parsedData.Name,
+		Description: parsedData.Description,
+	})
+
+	if err != nil {
+		c.SendMsg(tgbotapi.NewMessage(
+			inputMessage.Chat.ID,
+			fmt.Sprintf("Error while creating an entity:%s", err),
+		))
+		return
+	}
+
+	c.SendMsg(tgbotapi.NewMessage(
 		inputMessage.Chat.ID,
-		"",
-	)
-
-	id, err := c.officeService.Create(parsedData)
-
-	if err != nil {
-		log.Printf("fail to create entity %v", err)
-		msg.Text = err.Error()
-	} else {
-		msg.Text = fmt.Sprintf("Entity was added, id:%d", id)
-	}
-
-	_, err = c.bot.Send(msg)
-	if err != nil {
-		log.Printf("OfficeCommander.Create: error sending reply message to chat - %v", err)
-	}
+		fmt.Sprintf("Entity was added, id:%d", id)))
 }

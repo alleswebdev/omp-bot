@@ -15,40 +15,45 @@ type CallbackListData struct {
 }
 
 func (c *OfficeCommander) CallbackList(callback *tgbotapi.CallbackQuery, callbackPath path.CallbackPath) {
-	parsedData := CallbackListData{}
+	var parsedData CallbackListData
+
 	err := json.Unmarshal([]byte(callbackPath.CallbackData), &parsedData)
+
 	if err != nil {
 		log.Printf("OfficeCommander.CallbackList: "+
 			"error reading json data for type CallbackListData from "+
 			"input string %v - %v", callbackPath.CallbackData, err)
 		return
 	}
-	msg := tgbotapi.NewMessage(
-		callback.Message.Chat.ID,
-		"",
-	)
 
 	entities, err := c.officeService.List(parsedData.Cursor, parsedData.Limit)
 
 	if err != nil {
-		msg.Text = err.Error()
-		serializedData, _ := json.Marshal(CallbackListData{
-			Cursor: 1,
-			Limit:  ListLimit,
+		msg := tgbotapi.NewMessage(
+			callback.Message.Chat.ID,
+			fmt.Sprintf("list error: %s", err),
+		)
+
+		serializedData, err := json.Marshal(CallbackListData{
+			Cursor: BaseOffset,
+			Limit:  BaseLimit,
 		})
 
+		if err != nil {
+			log.Printf("OfficeCommander.CallbackList: "+
+				"error reading json data for type CallbackListData from "+
+				"input string %v - %v", callbackPath.CallbackData, err)
+			return
+		}
+
 		callbackPath.CallbackData = string(serializedData)
+
 		msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData("First page", callbackPath.String()),
-			),
-		)
-		_, err = c.bot.Send(msg)
+			))
 
-		if err != nil {
-			log.Printf("OfficeCommander.CallbackList: error sending reply message to chat - %v", err)
-		}
-
+		c.SendMsg(msg)
 		return
 	}
 
@@ -59,12 +64,21 @@ func (c *OfficeCommander) CallbackList(callback *tgbotapi.CallbackQuery, callbac
 		outputMsgText += "\n"
 	}
 
-	msg.Text = outputMsgText
+	msg := tgbotapi.NewMessage(
+		callback.Message.Chat.ID,
+		outputMsgText,
+	)
 
-	serializedData, _ := json.Marshal(CallbackListData{
-		Cursor: parsedData.Cursor + ListLimit,
-		Limit:  ListLimit,
+	serializedData, err := json.Marshal(CallbackListData{
+		Cursor: parsedData.Cursor + BaseLimit,
+		Limit:  BaseLimit,
 	})
+
+	if err != nil {
+		log.Printf("OfficeCommander.CallbackList: "+
+			"error marshal json data for type CallbackListData %v", err)
+		return
+	}
 
 	callbackPath.CallbackData = string(serializedData)
 	msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
@@ -73,9 +87,5 @@ func (c *OfficeCommander) CallbackList(callback *tgbotapi.CallbackQuery, callbac
 		),
 	)
 
-	_, err = c.bot.Send(msg)
-
-	if err != nil {
-		log.Printf("OfficeCommander.CallbackList: error sending reply message to chat - %v", err)
-	}
+	c.SendMsg(msg)
 }
