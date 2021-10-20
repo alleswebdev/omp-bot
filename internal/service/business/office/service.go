@@ -128,11 +128,11 @@ func (s *DummyOfficeService) Update(officeId uint64, office business.Office) err
 }
 
 func (s *DummyOfficeService) getNextEntityId() uint64 {
-	if len(s.allEntities) == 0 {
-		return 1
-	}
-
 	maxId := uint64(1)
+
+	if len(s.allEntities) == 0 {
+		return maxId
+	}
 
 	for _, entity := range s.allEntities {
 		if entity.Id > maxId {
