@@ -63,7 +63,7 @@ func (s *DummyOfficeService) List(cursor uint64, limit uint64) ([]business.Offic
 		return nil, ErrorEmptyList
 	}
 
-	// когда сущеностей осталось меньше, чем лимит на выдачу, но их надо показать
+	// когда сущностей осталось меньше, чем лимит на выдачу, но их надо показать
 	if uint64(len(s.allEntities)) > cursor && uint64(len(s.allEntities)) < cursor+limit {
 		return s.allEntities[cursor:], nil
 	}
