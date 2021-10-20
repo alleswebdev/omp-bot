@@ -76,32 +76,25 @@ func (s *DummyOfficeService) List(cursor uint64, limit uint64) ([]business.Offic
 }
 
 func (s *DummyOfficeService) Describe(officeId uint64) (*business.Office, error) {
-	if len(s.allEntities) == 0 {
-		return nil, ErrorEmptyList
+	index, ok := s.getIndexById(officeId)
+
+	if !ok {
+		return nil, ErrorNotFound
 	}
 
-	for _, entity := range s.allEntities {
-		if entity.Id == officeId {
-			return &entity, nil
-		}
-	}
-
-	return nil, ErrorNotFound
+	return &s.allEntities[index], nil
 }
 
 func (s *DummyOfficeService) Remove(officeId uint64) (bool, error) {
-	if len(s.allEntities) == 0 {
-		return false, ErrorEmptyList
+	index, ok := s.getIndexById(officeId)
+
+	if !ok {
+		return false, ErrorNotFound
 	}
 
-	for key, entity := range s.allEntities {
-		if entity.Id == officeId {
-			s.allEntities = append(s.allEntities[:key], s.allEntities[key+1:]...)
-			return true, nil
-		}
-	}
+	s.allEntities = append(s.allEntities[:index], s.allEntities[index+1:]...)
 
-	return false, ErrorNotFound
+	return true, nil
 }
 
 func (s *DummyOfficeService) Create(o business.Office) (uint64, error) {
@@ -116,15 +109,30 @@ func (s *DummyOfficeService) Update(officeId uint64, office business.Office) err
 		return ErrorEmptyList
 	}
 
+	index, ok := s.getIndexById(officeId)
+
+	if !ok {
+		return ErrorNotFound
+	}
+
+	s.allEntities[index].Name = office.Name
+	s.allEntities[index].Description = office.Description
+
+	return nil
+}
+
+func (s *DummyOfficeService) getIndexById(officeId uint64) (int, bool) {
+	if len(s.allEntities) == 0 {
+		return 0, false
+	}
+
 	for k, entity := range s.allEntities {
 		if entity.Id == officeId {
-			s.allEntities[k].Name = office.Name
-			s.allEntities[k].Description = office.Description
-			return nil
+			return k, true
 		}
 	}
 
-	return ErrorNotFound
+	return 0, false
 }
 
 func (s *DummyOfficeService) getNextEntityId() uint64 {
